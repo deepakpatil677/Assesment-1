@@ -27,25 +27,38 @@ function App() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    
-    // TODO: Replace with actual API call to backend
-    setTimeout(() => {
-      // Mock calculation for now
-      const localCommission = parseFloat(formData.localSalesCount) * parseFloat(formData.averageSaleAmount) * 0.20;
-      const foreignCommission = parseFloat(formData.foreignSalesCount) * parseFloat(formData.averageSaleAmount) * 0.35;
-      const avalphaTechnologiesTotal = localCommission + foreignCommission;
-      
-      const competitorLocal = parseFloat(formData.localSalesCount) * parseFloat(formData.averageSaleAmount) * 0.02;
-      const competitorForeign = parseFloat(formData.foreignSalesCount) * parseFloat(formData.averageSaleAmount) * 0.0755;
-      const competitorTotal = competitorLocal + competitorForeign;
-      
-      setResults({
-        avalphaTechnologiesCommission: avalphaTechnologiesTotal.toFixed(2),
-        competitorCommission: competitorTotal.toFixed(2)
+  
+    try {
+      const response = await fetch("https://localhost:5000/Commision", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          localSalesCount: Number(formData.localSalesCount),
+          foreignSalesCount: Number(formData.foreignSalesCount),
+          averageSaleAmount: Number(formData.averageSaleAmount)
+        })
       });
+  
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText);
+      }
+  
+      const data = await response.json();
+  
+      setResults({
+        avalphaTechnologiesCommission: data.avalphaTechnologiesCommissionAmount.toFixed(2),
+        competitorCommission: data.competitorCommissionAmount.toFixed(2)
+      });
+  
+    } catch (error) {
+      alert("Error calculating commission: " + error.message);
+    } finally {
       setIsLoading(false);
-    }, 1000);
-  };
+    }
+  };  
 
   return (
     <div className="App">
