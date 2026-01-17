@@ -6,15 +6,48 @@ namespace AvalphaTechnologies.CommissionCalculator.Controllers
     [Route("[controller]")]
     public class CommisionController : ControllerBase
     {
-        [ProducesResponseType(typeof(CommissionCalculationResponse), 200)]
         [HttpPost]
+        [ProducesResponseType(typeof(CommissionCalculationResponse), 200)]
+        [ProducesResponseType(400)]
         public IActionResult Calculate(CommissionCalculationRequest calculationRequest)
         {
-            return Ok(new CommissionCalculationResponse() { 
-                AvalphaTechnologiesCommissionAmount = 999,
-                CompetitorCommissionAmount = 100
-            });
+            if (calculationRequest == null)
+                return BadRequest("Request cannot be null.");
+
+            if (calculationRequest.LocalSalesCount < 0 ||
+                calculationRequest.ForeignSalesCount < 0 ||
+                calculationRequest.AverageSaleAmount < 0)
+            {
+                return BadRequest("Inputs must be non-negative values.");
+            }
+
+            // Avalpha commission
+            decimal avalphaLocal =
+                calculationRequest.LocalSalesCount * calculationRequest.AverageSaleAmount * 0.20m;
+
+            decimal avalphaForeign =
+                calculationRequest.ForeignSalesCount * calculationRequest.AverageSaleAmount * 0.35m;
+
+            decimal avalphaTotal = avalphaLocal + avalphaForeign;
+
+            // Competitor commission
+            decimal competitorLocal =
+                calculationRequest.LocalSalesCount * calculationRequest.AverageSaleAmount * 0.02m;
+
+            decimal competitorForeign =
+                calculationRequest.ForeignSalesCount * calculationRequest.AverageSaleAmount * 0.0755m;
+
+            decimal competitorTotal = competitorLocal + competitorForeign;
+
+            var response = new CommissionCalculationResponse
+            {
+                AvalphaTechnologiesCommissionAmount = avalphaTotal,
+                CompetitorCommissionAmount = competitorTotal
+            };
+
+            return Ok(response);
         }
+
     }
 
     public class CommissionCalculationRequest
